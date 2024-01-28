@@ -37,9 +37,13 @@ jobs:
       - name: Run preflight validation
         uses: azure/arm-deploy@v1
         with:
-          scope: "subscription"
-          region: ${{ vars.AZURE_LOCATION }}
-          # resourceGroupName: ${{ vars.AZURE_TEST_RESOURCEGROUP_NAME }}
+          # scope: "subscription"
+          # region: ${{ vars.AZURE_LOCATION }}
+          scope: "resourcegroup"
+          resourceGroupName: ${{ vars.AZURE_TEST_RESOURCEGROUP_NAME }}
           template: infra/main.bicep
           deploymentMode: Validate
           parameters: infra/main.parameters.json
+        env:
+          AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
