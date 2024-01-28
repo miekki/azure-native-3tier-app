@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Bicep linter
-        run: az bicep build --file ${{ env.main_infra_file_path }}
+        run: az bicep build --file infra/main.bicep
 
       # - name: Run PSRule analysis
       #   uses: microsoft/ps-rules@2
