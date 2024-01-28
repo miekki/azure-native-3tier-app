@@ -38,7 +38,7 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           scope: "subscription"
-          region: ${{ vars.AZURE_LOCATION }}
+          region: "uksouth"
           template: infra/main.bicep
           deploymentMode: Validate
           parameters: infra/main.parameters.json
