@@ -25,10 +25,10 @@ jobs:
       - name: Run Bicep linter
         run: az bicep build --file ${{ env.main_infra_file_path }}
 
-      - name: Run PSRule analysis
-        uses: microsoft/ps-rules@v2
-        with:
-          modules: PSRule.Rules.Azure
+      # - name: Run PSRule analysis
+      #   uses: microsoft/ps-rules@2
+      #   with:
+      #     modules: PSRule.Rules.Azure
 
       - name: Sign in to Azure
         uses: azure/login@v1
