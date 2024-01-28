@@ -12,15 +12,26 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  main_inra_file_path: infra/main.bicep
-
 jobs:
   build_infra:
     runs-on: ubuntu-latest
     steps:
       - name: Chekout code
         uses: actions/checkout@v4
+
+      - name: Sign in to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID}}
+
+      - name: Azure CLI script
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az account show
 
       - name: Run Bicep linter
         run: az bicep build --file infra/main.bicep
@@ -30,16 +41,9 @@ jobs:
       #   with:
       #     modules: PSRule.Rules.Azure
 
-      - name: Sign in to Azure
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID}}
-
       - name: Run preflight validation
         uses: azure/arm-deploy@v1
         with:
           scope: "subscription"
-          template: ${{ env.main_infra_file_path }}
+          template: infra/main.bicep
           deploymentMode: Validate
