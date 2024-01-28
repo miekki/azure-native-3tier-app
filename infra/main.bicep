@@ -3,14 +3,14 @@ targetScope = 'subscription'
 @minLength(1)
 @maxLength(64)
 @description('Name of the environment eg. dev, prod')
-param environmentName string = 'dev'
+param environmentName string
 
 // tt
 @minLength(1)
 @description('Location for all resources')
-param location string = 'uksouth'
+param location string
 
-param resourceGroupName string = 'rg-mm-manual'
+param resourceGroupName string
 
 var abbrs = loadJsonContent('abbreviations.json')
 //var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
