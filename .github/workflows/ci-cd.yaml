@@ -41,7 +41,7 @@ jobs:
           region: "uksouth"
           template: infra/main.bicep
           deploymentMode: Validate
-          parameters: infra/main.parameters.json location= ${{ vars.AZURE_LOCATION }} environmentName= ${{ vars.AZURE_ENV_NAME }}
+          parameters: infra/main.parameters.json location=${{ vars.AZURE_LOCATION }} environmentName=${{ vars.AZURE_ENV_NAME }}
         # env:
         #   # location: ${{ vars.AZURE_LOCATION }}
         #   environmentName: ${{ vars.AZURE_ENV_NAME }}
