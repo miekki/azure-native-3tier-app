@@ -10,7 +10,7 @@ param environmentName string
 @description('Location for all resources')
 param location string
 
-param resourceGroupName string
+param resourceGroupName string = ''
 
 var abbrs = loadJsonContent('abbreviations.json')
 //var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
