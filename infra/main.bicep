@@ -23,8 +23,9 @@ resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   tags: tags
 }
 
-module vNet 'br/mmbicepmoduleregistry.azurecr.io/virtual-network:1.0.35' = {
-  name: vnet //'${uniqueString(deployment().name, 'uksouth')}-vnet'
+module vNet 'br:mmbicepmoduleregistry.azurecr.io/virtual-network:1.0.35' = {
+  scope: rg
+  name: 'vnet'
   params: {
     name: '${abbrs.networkVirtualNetworks}-${resourceToken}'
     addressPrefixes: [ '10.0.0.0/16' ]
