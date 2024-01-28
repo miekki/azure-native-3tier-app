@@ -8,7 +8,7 @@ param environmentName string = 'dev'
 // tt
 @minLength(1)
 @description('Location for all resources')
-param location string
+param location string = 'uksouth'
 
 param resourceGroupName string = 'rg-mm-manual'
 
