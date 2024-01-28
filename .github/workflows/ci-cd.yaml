@@ -43,5 +43,5 @@ jobs:
           deploymentMode: Validate
           parameters: infra/main.parameters.json
         env:
-          location: ${{ vars.AZURE_ENV_NAME }}
-          environmentName: ${{ vars.AZURE_LOCATION }}
+          location: ${{ vars.AZURE_LOCATION }}
+          environmentName: ${{ vars.AZURE_ENV_NAME }}
