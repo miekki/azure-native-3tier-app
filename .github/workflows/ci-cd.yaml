@@ -39,7 +39,7 @@ jobs:
         with:
           scope: "subscription"
           region: ${{ vars.AZURE_LOCATION }}
-          resourceGroupName: ${{ vars.AZURE_TEST_RESOURCEGROUP_NAME }}
+          # resourceGroupName: ${{ vars.AZURE_TEST_RESOURCEGROUP_NAME }}
           template: infra/main.bicep
           deploymentMode: Validate
           parameters: infra/main.parameters.json
