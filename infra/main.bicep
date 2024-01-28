@@ -5,6 +5,7 @@ targetScope = 'subscription'
 @description('Name of the environment eg. dev, prod')
 param environmentName string = 'dev'
 
+// tt
 @minLength(1)
 @description('Location for all resources')
 param location string
