@@ -3,7 +3,7 @@ targetScope = 'subscription'
 @minLength(1)
 @maxLength(64)
 @description('Name of the environment eg. dev, prod')
-param environmentName string
+param environmentName string = 'dev'
 
 @minLength(1)
 @description('Location for all resources')
