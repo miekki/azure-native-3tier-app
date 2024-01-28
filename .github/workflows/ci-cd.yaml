@@ -38,6 +38,7 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           scope: "subscription"
+          resourceGroupName: ${{ vars.AZURE_TEST_RESOURCEGROUP_NAME }}
           template: infra/main.bicep
           deploymentMode: Validate
           parameters: infra/main.parameters.json
