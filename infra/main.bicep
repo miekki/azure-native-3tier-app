@@ -41,8 +41,8 @@ module vNet 'br:mmbicepmoduleregistry.azurecr.io/virtual-network:1.0.35' = {
       }
       {
         name: 'backend-subnet'
-        addressPrefix: '10.0.2.0./24'
-        serviceEndpoint: [
+        addressPrefix: '10.0.2.0/24'
+        serviceEndpoints: [
           {
             service: 'Microsoft.Storage'
           }
@@ -53,5 +53,17 @@ module vNet 'br:mmbicepmoduleregistry.azurecr.io/virtual-network:1.0.35' = {
         ]
       }
     ]
+  }
+}
+
+module web 'br:mmbicepmoduleregistry.azurecr.io/appservice:0.1.1' = {
+  scope: rg
+  name: 'web'
+  params: {
+    name: '${abbrs.webSitesAppService}-${resourceToken}'
+    location: location
+    tags: tags
+    runtimeName: 'dotnetcore'
+    runtimeVersion: '8.0'
   }
 }
