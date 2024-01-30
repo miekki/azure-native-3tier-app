@@ -14,7 +14,7 @@ param resourceGroupName string = ''
 
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
-var tags = { environment: environmentName }
+var tags = { environment: environmentName, projectName: 'Azure-Native-3Tier' }
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
@@ -31,5 +31,27 @@ module vNet 'br:mmbicepmoduleregistry.azurecr.io/virtual-network:1.0.35' = {
     addressPrefixes: [ '10.0.0.0/16' ]
     location: location
     tags: tags
+    newOrExistingNSG: 'new'
+    networkSecurityGroupName: '${abbrs.networkNetworkSecurityGroups}-${resourceToken}'
+    subnets: [
+      {
+        name: 'frontent-subnet'
+        addressPrefix: '10.0.1.0/24'
+
+      }
+      {
+        name: 'backend-subnet'
+        addressPrefix: '10.0.2.0./24'
+        serviceEndpoint: [
+          {
+            service: 'Microsoft.Storage'
+          }
+          {
+            service: 'Microsoft.Sql'
+          }
+
+        ]
+      }
+    ]
   }
 }
