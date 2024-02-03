@@ -1,16 +1,16 @@
+name: deploy bicep
+description: This action will deploy bicep file (default to main.bicep) from infra folder to Azure
 inputs:
   Template_File_Path:
     description: "Provide file name and path to the main bicep file"
-    type: string
+    default: ./infra/main.bicep
   Parameters_File_Path:
     description: "Provide file name and path to the parameters file"
-    type: string
+    default: ./infra/main.parameters.json
   Azure_Env_Name:
     description: "Provide environments name. eg dev or prod"
-    type: string
   Azure_Location:
     description: "Provide Azure Location Name"
-    type: string
 
 runs:
   using: "composite"

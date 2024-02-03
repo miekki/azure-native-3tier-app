@@ -1,22 +1,19 @@
+name: build docker image"
+description: This action will build docker image and push to registry
 inputs:
   image_name:
     description: "Name for the image"
-    type: string
   login_url:
     description: "Azure Container Registry login URL"
-    type: string
   username:
     description: "Username for the Container repository"
-    type: string
   password:
     description: "Password for the Container repository"
-    type: string
   version:
     description: "Tag for the image"
-    type: string
   GHAS_Enabled:
     description: "True if Github Advance Security Enable for your repo."
-    type: bool
+    default: "false"
 
 runs:
   using: "composite"

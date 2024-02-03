@@ -1,25 +1,30 @@
+name: build bicep
+description: This action will build bicep files (defaults to main.bicep) form infra forlder
+
 inputs:
   Template_File_Path:
     description: "Provide file name and path to the main bicep file"
-    type: string
+    default: main.bicep
   Parameters_File_Path:
     description: "Provide file name and path to the parameters file"
-    type: string
+    default: main.parameters.json
   Azure_Env_Name:
     description: "Provide environments name. eg dev or prod"
-    type: string
   Azure_Location:
     description: "Provide Azure Location Name"
-    type: string
 
 runs:
   using: "composite"
   steps:
     # This step is need to downalod module comming from the private tepo infra/main.bicep
     - name: Run Bicep restore
+      working-directory: ./infra
+      shell: bash
       run: az bicep restore --file ${{ inputs.Template_File_Path }}
 
     - name: Run Bicep linter
+      working-directory: ./infra
+      shell: bash
       run: az bicep build --file ${{ inputs.Template_File_Path }}
 
     # - name: Run PSRule analysis

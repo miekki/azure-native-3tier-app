@@ -39,8 +39,8 @@ jobs:
       - name: Build bicep
         uses: ./.github/actions/build-bicep
         with:
-          Template_File_Path: infra/main.bicep
-          Parameters_File_Path: infra/main.parameters.json
+          # Template_File_Path: main.bicep
+          # Parameters_File_Path: main.parameters.json
           Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
           Azure_Location: ${{ vars.AZURE_LOCATION }}
 
@@ -129,8 +129,8 @@ jobs:
       - name: Deploy bicep
         uses: ./.github/actions/deploy-bicep
         with:
-          Template_File_Path: infra/main.bicep
-          Parameters_File_Path: infra/main.parameters.json
+          # Template_File_Path: infra/main.bicep
+          # Parameters_File_Path: infra/main.parameters.json
           Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
           Azure_Location: ${{ vars.AZURE_LOCATION }}
 

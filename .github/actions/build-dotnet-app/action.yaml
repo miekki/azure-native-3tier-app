@@ -1,7 +1,8 @@
+name: build dotnet application
+description: This action will buidl and test dotnet application
 inputs:
   dotnet_version:
     description: "Provide version of dotnet framework"
-    type: string
 
 runs:
   using: "composite"
