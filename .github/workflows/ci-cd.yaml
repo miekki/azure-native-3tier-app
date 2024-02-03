@@ -13,7 +13,14 @@ permissions:
   contents: read
 
 env:
-  default_region: "uksouth"
+  dotnet_version: "8.0"
+  GHAS_Enabled: false
+  application_image_name: "azure-native-3tier-app"
+
+  CONTAINER_REGISTRY_URL: ${{ vars.CONTAINER_REGISTRY_URL }}
+  # Set up in github below secrets with credentila for container registry
+  # CONTAINER_REGISTRY_USERNAME
+  # CONTAINER_REGISTRY_PASSWORD
 
 jobs:
   build_infra:
@@ -29,26 +36,81 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # This step is need to downalod module comming from the private tepo
-      - name: Run Bicep restore
-        run: az bicep restore --file infra/main.bicep
-
-      - name: Run Bicep linter
-        run: az bicep build --file infra/main.bicep
-
-      # - name: Run PSRule analysis
-      #   uses: microsoft/ps-rules@2
-      #   with:
-      #     modules: PSRule.Rules.Azure
-
-      - name: Run preflight validation
-        uses: azure/arm-deploy@v1
+      - name: Build bicep
+        uses: ./.github/actions/build-bicep
         with:
-          scope: "subscription"
-          region: ${{ env.default_region }}
-          template: infra/main.bicep
-          deploymentMode: Validate
-          parameters: infra/main.parameters.json location=${{ vars.AZURE_LOCATION }} environmentName=${{ vars.AZURE_ENV_NAME }}
+          Template_File_Path: infra/main.bicep
+          Parameters_File_Path: infra/main.parameters.json
+          Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
+          Azure_Location: ${{ vars.AZURE_LOCATION }}
+
+      # # This step is need to downalod module comming from the private tepo
+      # - name: Run Bicep restore
+      #   run: az bicep restore --file infra/main.bicep
+
+      # - name: Run Bicep linter
+      #   run: az bicep build --file infra/main.bicep
+
+      # # - name: Run PSRule analysis
+      # #   uses: microsoft/ps-rules@2
+      # #   with:
+      # #     modules: PSRule.Rules.Azure
+
+      # - name: Run preflight validation
+      #   uses: azure/arm-deploy@v1
+      #   with:
+      #     scope: "subscription"
+      #     region: ${{ env.default_region }}
+      #     template: infra/main.bicep
+      #     deploymentMode: Validate
+      #     parameters: infra/main.parameters.json location=${{ vars.AZURE_LOCATION }} environmentName=${{ vars.AZURE_ENV_NAME }}
+
+  build-app:
+    runs-on: ubuntu-latest
+    outputs:
+      url_provided: ${{ steps.check_url.outputs.url_provided }}
+    permissions:
+      contents: read # for actions/checkout to fetch code
+
+    steps:
+      - name: Check if provide conrainer registry url
+        id: check_url
+        run: |
+          if [[ "$env.CONTAINER_REGISTRY_URL" == "" ]]; then
+            echo "url_provided=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "url_provided=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Test dotnet application
+        uses: ./.github/actions/build-dotnet-app
+        with:
+          dotnet_version: ${{ env.dotnet_version }}
+
+  build-image:
+    if: ${{ needs.build-app.outputs.url_provided }}
+    runs-on: ubuntu-latest
+    needs: [build-app, build_infra]
+    permissions:
+      contents: read # for actions/checkout to fetch code
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Publish Docker Image
+        uses: ./.github/actions/build-image
+        with:
+          image_name: ${{ env.application_image_name }}
+
+          login_url: ${{ env.CONTAINER_REGISTRY_URL  }}
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+          version: ${{ github.sha }}
+          GHAS_Enabled: ${{ env.GHAS_Enabled }}
 
   deploy_infra:
     runs-on: ubuntu-latest
@@ -64,10 +126,18 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploye infra
-        uses: azure/arm-deploy@v1
+      - name: Deploy bicep
+        uses: ./.github/actions/deploy-bicep
         with:
-          scope: "subscription"
-          region: ${{ env.default_region }}
-          template: infra/main.bicep
-          parameters: infra/main.parameters.json location=${{ vars.AZURE_LOCATION }} environmentName=${{ vars.AZURE_ENV_NAME }}
+          Template_File_Path: infra/main.bicep
+          Parameters_File_Path: infra/main.parameters.json
+          Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
+          Azure_Location: ${{ vars.AZURE_LOCATION }}
+
+      # - name: Deploye infra
+      #   uses: azure/arm-deploy@v1
+      #   with:
+      #     scope: "subscription"
+      #     region: ${{ vars.AZURE_LOCATION }}
+      #     template: infra/main.bicep
+      #     parameters: infra/main.parameters.json location=${{ vars.AZURE_LOCATION }} environmentName=${{ vars.AZURE_ENV_NAME }}

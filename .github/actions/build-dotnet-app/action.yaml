@@ -1,0 +1,29 @@
+inputs:
+  dotnet_version:
+    description: "Provide version of dotnet framework"
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup dotnet ${{ inputs.dotnet_version}}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet_version }}
+
+    - name: Restore dependencies
+      shell: bash
+      run: dotnet restore
+
+    # - name: Install Playwright Browsers
+    #   shell: bash
+    #   run: npx playwright install --with-deps
+
+    - name: Build the app
+      shell: bash
+      run: dotnet build
+
+    # Run all the test except the acceptence test as it needs application deploy somewhere
+    - name: Test the app
+      shell: bash
+      run: dotnet test --filter "FullyQualifiedName!~AcceptanceTests"

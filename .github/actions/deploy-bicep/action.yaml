@@ -1,0 +1,24 @@
+inputs:
+  Template_File_Path:
+    description: "Provide file name and path to the main bicep file"
+    type: string
+  Parameters_File_Path:
+    description: "Provide file name and path to the parameters file"
+    type: string
+  Azure_Env_Name:
+    description: "Provide environments name. eg dev or prod"
+    type: string
+  Azure_Location:
+    description: "Provide Azure Location Name"
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Deploye infra
+      uses: azure/arm-deploy@v1
+      with:
+        scope: "subscription"
+        region: ${{ inputs.Azure_Location }}
+        template: ${{ inputs.Template_File_Path }}
+        parameters: ${{ inputs.Parameters_File_Path }} location=${{ inputs.Azure_Location }} environmentName=${{ inputs.Azure_Env_Name }}

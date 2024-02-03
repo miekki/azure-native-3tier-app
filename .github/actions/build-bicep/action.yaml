@@ -1,0 +1,37 @@
+inputs:
+  Template_File_Path:
+    description: "Provide file name and path to the main bicep file"
+    type: string
+  Parameters_File_Path:
+    description: "Provide file name and path to the parameters file"
+    type: string
+  Azure_Env_Name:
+    description: "Provide environments name. eg dev or prod"
+    type: string
+  Azure_Location:
+    description: "Provide Azure Location Name"
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    # This step is need to downalod module comming from the private tepo infra/main.bicep
+    - name: Run Bicep restore
+      run: az bicep restore --file ${{ inputs.Template_File_Path }}
+
+    - name: Run Bicep linter
+      run: az bicep build --file ${{ inputs.Template_File_Path }}
+
+    # - name: Run PSRule analysis
+    #   uses: microsoft/ps-rules@2
+    #   with:
+    #     modules: PSRule.Rules.Azure
+
+    - name: Run preflight validation
+      uses: azure/arm-deploy@v1
+      with:
+        scope: "subscription"
+        region: ${{ inputs.Azure_Location }}
+        template: ${{ inputs.Template_File_Path }}
+        deploymentMode: Validate
+        parameters: ${{ inputs.Parameters_File_Path }} location=${{ inputs.Azure_Location }} environmentName=${{ inputs.Azure_Env_Name }}
