@@ -18,7 +18,7 @@ var tags = { environment: environmentName, projectName: 'Azure-Native-3Tier' }
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
-  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
+  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}-${resourceToken}-${environmentName}'
   location: location
   tags: tags
 }
