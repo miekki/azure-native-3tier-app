@@ -81,7 +81,7 @@ jobs:
       - name: Docker login
         shell: bash
         run: |
-          docker login ${{ env.CONTAINER_REGISTRY_URL  }} --username ${{ secrets.CONTAINER_REGISTRY_USERNAME }} --password-stdin ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+          docker login ${{ env.CONTAINER_REGISTRY_URL  }} --username ${{ secrets.CONTAINER_REGISTRY_USERNAME }} --password ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
 
       - name: Docker Build Image
         shell: bash
