@@ -21,7 +21,7 @@ runs:
     - name: Docker login
       shell: bash
       run: |
-        docker login ${{ inputs.login_url }} --username ${{ inputs.username }} --password-stdin ${{inputs.password}}
+        docker login ${{ inputs.login_url }} --username ${{ inputs.username }} --password ${{inputs.password}}
 
     - name: Docker Build Image
       shell: bash
