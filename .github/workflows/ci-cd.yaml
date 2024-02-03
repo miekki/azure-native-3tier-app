@@ -23,54 +23,54 @@ env:
   # CONTAINER_REGISTRY_PASSWORD
 
 jobs:
-  # build_infra:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Chekout code
-  #       uses: actions/checkout@v4
+  build_infra:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chekout code
+        uses: actions/checkout@v4
 
-  #     - name: Sign in to Azure
-  #       uses: azure/login@v1
-  #       with:
-  #         client-id: ${{ secrets.AZURE_CLIENT_ID }}
-  #         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-  #         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Sign in to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  #     - name: Build bicep
-  #       uses: ./.github/actions/build-bicep
-  #       with:
-  #         Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
-  #         Azure_Location: ${{ vars.AZURE_LOCATION }}
+      - name: Build bicep
+        uses: ./.github/actions/build-bicep
+        with:
+          Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
+          Azure_Location: ${{ vars.AZURE_LOCATION }}
 
-  # build-app:
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     url_provided: ${{ steps.check_url.outputs.url_provided }}
-  #   permissions:
-  #     contents: read # for actions/checkout to fetch code
+  build-app:
+    runs-on: ubuntu-latest
+    outputs:
+      url_provided: ${{ steps.check_url.outputs.url_provided }}
+    permissions:
+      contents: read # for actions/checkout to fetch code
 
-  #   steps:
-  #     - name: Check if provide conrainer registry url
-  #       id: check_url
-  #       run: |
-  #         if [[ "$env.CONTAINER_REGISTRY_URL" == "" ]]; then
-  #           echo "url_provided=0" >> "$GITHUB_OUTPUT"
-  #         else
-  #           echo "url_provided=1" >> "$GITHUB_OUTPUT"
-  #         fi
+    steps:
+      - name: Check if provide conrainer registry url
+        id: check_url
+        run: |
+          if [[ "$env.CONTAINER_REGISTRY_URL" == "" ]]; then
+            echo "url_provided=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "url_provided=1" >> "$GITHUB_OUTPUT"
+          fi
 
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Build and Test dotnet application
-  #       uses: ./.github/actions/build-dotnet-app
-  #       with:
-  #         dotnet_version: ${{ env.dotnet_version }}
+      - name: Build and Test dotnet application
+        uses: ./.github/actions/build-dotnet-app
+        with:
+          dotnet_version: ${{ env.dotnet_version }}
 
   build-image:
-    # if: ${{ needs.build-app.outputs.url_provided }}
+    if: ${{ needs.build-app.outputs.url_provided }}
     runs-on: ubuntu-latest
-    # needs: [build-app, build_infra]
+    needs: [build-app, build_infra]
     permissions:
       contents: read # for actions/checkout to fetch code
 
@@ -78,81 +78,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Docker login
-        shell: bash
-        run: |
-          docker login ${{ env.CONTAINER_REGISTRY_URL  }} --username ${{ secrets.CONTAINER_REGISTRY_USERNAME }} --password ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
-
-      - name: Docker Build Image
-        shell: bash
-        run: |
-          docker build . -t ${{ env.CONTAINER_REGISTRY_URL  }}/${{ env.application_image_name }}:${{ github.sha }} -t ${{ env.CONTAINER_REGISTRY_URL  }}/${{ env.application_image_name }}:latest
-
-      - name: Docker Publish Image
-        shell: bash
-        run: |
-          docker push ${{ env.CONTAINER_REGISTRY_URL  }}/${{ env.application_image_name }} --all-tags
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - name: Build and Publish Docker Image
+        uses: ./.github/actions/build-image
         with:
-          image-ref: ${{ env.CONTAINER_REGISTRY_URL  }}/${{ env.application_image_name }}:${{ github.sha }}
-          severity: "CRITICAL,HIGH, MEDIUM"
-          format: ${{ env.GHAS_Enabled == true && 'sarif' || 'table' }}
-          output: "${{ env.application_image_name }}-results.sarif"
-          ignore-unfixed: true
-          vuln-type: "os,library"
+          image_name: ${{ env.application_image_name }}
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        if: ${{ env.GHAS_Enabled == true }}
-        uses: github/codeql-action/upload-sarif@v3
+          login_url: ${{ env.CONTAINER_REGISTRY_URL  }}
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+          version: ${{ github.sha }}
+          GHAS_Enabled: ${{ env.GHAS_Enabled }}
+
+  deploy_infra:
+    runs-on: ubuntu-latest
+    needs: [build_infra]
+    steps:
+      - name: Chekout code
+        uses: actions/checkout@v4
+
+      - name: Sign in to Azure
+        uses: azure/login@v1
         with:
-          sarif_file: "${{ env.application_image_name }}-results.sarif"
-          category: ${{ env.application_image_name }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Uload Trivy scan results as artifact
-        uses: actions/upload-artifact@v4
+      - name: Deploy bicep
+        uses: ./.github/actions/deploy-bicep
         with:
-          name: ${{ env.application_image_name }}-results
-          path: "${{ env.application_image_name }}-results.sarif"
-
-      # - name: Build and Publish Docker Image
-      #   uses: ./.github/actions/build-image
-      #   with:
-      #     image_name: ${{ env.application_image_name }}
-
-      #     login_url: ${{ env.CONTAINER_REGISTRY_URL  }}
-      #     username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
-      #     password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
-      #     version: ${{ github.sha }}
-      #     GHAS_Enabled: ${{ env.GHAS_Enabled }}
-
-  # deploy_infra:
-  #   runs-on: ubuntu-latest
-  #   needs: [build_infra]
-  #   steps:
-  #     - name: Chekout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Sign in to Azure
-  #       uses: azure/login@v1
-  #       with:
-  #         client-id: ${{ secrets.AZURE_CLIENT_ID }}
-  #         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-  #         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-  #     - name: Deploy bicep
-  #       uses: ./.github/actions/deploy-bicep
-  #       with:
-  #         # Template_File_Path: infra/main.bicep
-  #         # Parameters_File_Path: infra/main.parameters.json
-  #         Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
-  #         Azure_Location: ${{ vars.AZURE_LOCATION }}
-
-  #     # - name: Deploye infra
-  #     #   uses: azure/arm-deploy@v1
-  #     #   with:
-  #     #     scope: "subscription"
-  #     #     region: ${{ vars.AZURE_LOCATION }}
-  #     #     template: infra/main.bicep
-  #     #     parameters: infra/main.parameters.json location=${{ vars.AZURE_LOCATION }} environmentName=${{ vars.AZURE_ENV_NAME }}
+          Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
+          Azure_Location: ${{ vars.AZURE_LOCATION }}
