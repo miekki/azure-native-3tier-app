@@ -39,31 +39,8 @@ jobs:
       - name: Build bicep
         uses: ./.github/actions/build-bicep
         with:
-          # Template_File_Path: main.bicep
-          # Parameters_File_Path: main.parameters.json
           Azure_Env_Name: ${{ vars.AZURE_ENV_NAME }}
           Azure_Location: ${{ vars.AZURE_LOCATION }}
-
-      # # This step is need to downalod module comming from the private tepo
-      # - name: Run Bicep restore
-      #   run: az bicep restore --file infra/main.bicep
-
-      # - name: Run Bicep linter
-      #   run: az bicep build --file infra/main.bicep
-
-      # # - name: Run PSRule analysis
-      # #   uses: microsoft/ps-rules@2
-      # #   with:
-      # #     modules: PSRule.Rules.Azure
-
-      # - name: Run preflight validation
-      #   uses: azure/arm-deploy@v1
-      #   with:
-      #     scope: "subscription"
-      #     region: ${{ env.default_region }}
-      #     template: infra/main.bicep
-      #     deploymentMode: Validate
-      #     parameters: infra/main.parameters.json location=${{ vars.AZURE_LOCATION }} environmentName=${{ vars.AZURE_ENV_NAME }}
 
   build-app:
     runs-on: ubuntu-latest
@@ -101,16 +78,54 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and Publish Docker Image
-        uses: ./.github/actions/build-image
-        with:
-          image_name: ${{ env.application_image_name }}
+      - name: Docker login
+        shell: bash
+        run: |
+          docker login ${{ env.CONTAINER_REGISTRY_URL  }} --username ${{ secrets.CONTAINER_REGISTRY_USERNAME }} --password-stdin ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
 
-          login_url: ${{ env.CONTAINER_REGISTRY_URL  }}
-          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
-          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
-          version: ${{ github.sha }}
-          GHAS_Enabled: ${{ env.GHAS_Enabled }}
+      - name: Docker Build Image
+        shell: bash
+        run: |
+          docker build . -t ${{ env.CONTAINER_REGISTRY_URL  }}/${{ env.application_image_name }}:${{ github.sha }} -t ${{ env.CONTAINER_REGISTRY_URL  }}/${{ env.application_image_name }}:latest
+
+      - name: Docker Publish Image
+        shell: bash
+        run: |
+          docker push ${{ env.CONTAINER_REGISTRY_URL  }}/${{ env.application_image_name }} --all-tags
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.CONTAINER_REGISTRY_URL  }}/${{ env.application_image_name }}:${{ github.sha }}
+          severity: "CRITICAL,HIGH, MEDIUM"
+          format: ${{ env.GHAS_Enabled == true && 'sarif' || 'table' }}
+          output: "${{ env.application_image_name }}-results.sarif"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: ${{ env.GHAS_Enabled == true }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "${{ env.application_image_name }}-results.sarif"
+          category: ${{ env.application_image_name }}
+
+      - name: Uload Trivy scan results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.application_image_name }}-results
+          path: "${{ env.application_image_name }}-results.sarif"
+
+      # - name: Build and Publish Docker Image
+      #   uses: ./.github/actions/build-image
+      #   with:
+      #     image_name: ${{ env.application_image_name }}
+
+      #     login_url: ${{ env.CONTAINER_REGISTRY_URL  }}
+      #     username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+      #     password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+      #     version: ${{ github.sha }}
+      #     GHAS_Enabled: ${{ env.GHAS_Enabled }}
 
   deploy_infra:
     runs-on: ubuntu-latest
