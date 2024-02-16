@@ -108,5 +108,13 @@
         }
       }
     }
+  },
+  "moduleAliases": {
+    "ts": {},
+    "br": {
+      "MMBicepModuleRegistry": {
+        "registry": "mmbicepmoduleregistry.azurecr.io"
+      }
+    }
   }
 }
