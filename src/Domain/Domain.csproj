@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>azure_native_3tier_app.Domain</RootNamespace>
+    <AssemblyName>azure_native_3tier_app.Domain</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+
+</Project>
