@@ -12,7 +12,7 @@ public abstract class BasePage
 
     public async Task GotoAsync()
     {
-        Page = await Browser.NewPageAsync();
+        Page = await Browser.NewPageAsync(new BrowserNewPageOptions() { IgnoreHTTPSErrors = true });
         await Page.GotoAsync(PagePath);
     }
 }
